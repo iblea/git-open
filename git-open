@@ -158,6 +158,17 @@ if [[ $gitprotocol == 'http' ]]; then
   protocol='http'
 fi
 
+http_domains=(
+  "gitlab.iasdf.com"
+)
+
+for http_domain in "${http_domains[@]}"; do
+  if [[ "$domain" == "$http_domain" ]]; then
+    protocol='http'
+    break
+  fi
+done
+
 # Allow config options to replace the server or the protocol
 openurl="$protocol://$domain"
 
