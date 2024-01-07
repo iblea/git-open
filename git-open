@@ -160,6 +160,7 @@ fi
 
 http_domains=(
   "gitlab.iasdf.com"
+  "gitlab.monitorapp.net"
 )
 
 for http_domain in "${http_domains[@]}"; do
