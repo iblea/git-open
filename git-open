@@ -19,6 +19,8 @@ git open [remote] [branch]
 c,commit!     open current commit
 i,issue!      open issues page
 s,suffix=     append this suffix
+pr!           open pull/merge request page
+mr!           open pull/merge request page
 p,print!      just print the url
 "
 
@@ -29,6 +31,7 @@ SUBDIRECTORY_OK='Yes' . "$(git --exec-path)/git-sh-setup"
 # Defaults
 is_commit=0
 is_issue=0
+is_pr_mr_request=0
 protocol="https"
 print_only=0
 suffix_flag=""
@@ -37,6 +40,8 @@ while test $# != 0; do
   case "$1" in
   --commit) is_commit=1;;
   --issue) is_issue=1;;
+  --pr) is_pr_mr_request=1;;
+  --mr) is_pr_mr_request=1;;
   --suffix=*) suffix_flag="$1";;
   --print) print_only=1;;
   --) shift; break ;;
@@ -158,6 +163,7 @@ if [[ $gitprotocol == 'http' ]]; then
   protocol='http'
 fi
 
+github_domain="github.com"
 http_domains=(
   "gitlab.iasdf.com"
   "gitlab.monitorapp.net"
@@ -192,6 +198,12 @@ if (( is_issue )); then
   # For issues, take the numbers and preprend 'issues/'
   [[ $remote_ref =~ [0-9]+ ]]
   providerBranchRef="/issues/${BASH_REMATCH[0]}"
+elif (( is_pr_mr_request )); then
+  if [[ "$domain" = "$github_domain" ]]; then
+    providerBranchRef="/pulls"
+  else
+    providerBranchRef="/merge_requests"
+  fi
 else
   # Make # and % characters url friendly
   #   github.com/paulirish/git-open/pull/24
@@ -225,7 +237,8 @@ elif [[ "${#pathargs[@]}" -ge '2' && ${pathargs[${#pathargs[@]} - 2]} == '_git' 
     # Handle case for the default repository url
     urlpath="${urlpath#_git\/*}"
     providerBranchRef="?id=${remote_ref//[^0-9]/}"
-  else
+  # else
+  elif (( ! is_pr_mr_request )); then
     # Keep project and repository name, append branch selector.
     providerBranchRef="?version=GB$remote_ref"
   fi
@@ -258,7 +271,7 @@ openurl="$protocol://$domain/$urlpath"
 if (( is_commit )); then
     sha=$(git rev-parse HEAD)
     openurl="$openurl/commit/$sha"
-elif [[ $remote_ref != "master" ]]; then
+elif [[ $remote_ref != "master" ]] || [[ $remote_ref != "main" ]]; then
     # simplify URL for master
     openurl="$openurl$providerBranchRef"
 fi
