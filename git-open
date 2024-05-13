@@ -4,6 +4,14 @@
 # https://www.kernel.org/pub/software/scm/git/docs/git-sh-setup.html
 # https://github.com/git/git/blob/master/git-rebase.sh
 # shellcheck disable=SC2034
+
+
+HTTP_DOMAINS=(
+  "gitlab.iasdf.com"
+  "gitlab.monitorapp.net"
+)
+
+
 OPTIONS_STUCKLONG=t
 # shellcheck disable=SC2034
 OPTIONS_KEEPDASHDASH=
@@ -164,12 +172,7 @@ if [[ $gitprotocol == 'http' ]]; then
 fi
 
 github_domain="github.com"
-http_domains=(
-  "gitlab.iasdf.com"
-  "gitlab.monitorapp.net"
-)
-
-for http_domain in "${http_domains[@]}"; do
+for http_domain in "${HTTP_DOMAINS[@]}"; do
   if [[ "$domain" == "$http_domain" ]]; then
     protocol='http'
     break
