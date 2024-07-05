@@ -29,6 +29,10 @@ i,issue!      open issues page
 s,suffix=     append this suffix
 pr!           open pull/merge request page
 mr!           open pull/merge request page
+cpr!          create pull/merge request page
+cmr!          create pull/merge request page
+cprb=         create pull/merge request page with target branch
+cmrb=         create pull/merge request page with target branch
 p,print!      just print the url
 "
 
@@ -40,6 +44,8 @@ SUBDIRECTORY_OK='Yes' . "$(git --exec-path)/git-sh-setup"
 is_commit=0
 is_issue=0
 is_pr_mr_request=0
+is_cr_pr_mr_request=0
+pr_mr_target_branch=""
 protocol="https"
 print_only=0
 suffix_flag=""
@@ -50,12 +56,26 @@ while test $# != 0; do
   --issue) is_issue=1;;
   --pr) is_pr_mr_request=1;;
   --mr) is_pr_mr_request=1;;
+  --cpr) is_cr_pr_mr_request=1;;
+  --cmr) is_cr_pr_mr_request=1;;
+  --cprb=*)
+    is_cr_pr_mr_request=1
+    pr_mr_target_branch="${1#--cprb=}"
+    ;;
+  --cmrb=*)
+    is_cr_pr_mr_request=1
+    pr_mr_target_branch="${1#--cmrb=}"
+    ;;
   --suffix=*) suffix_flag="$1";;
   --print) print_only=1;;
   --) shift; break ;;
   esac
   shift
 done
+
+if (( is_cr_pr_mr_request )); then
+  is_pr_mr_request=1
+fi
 
 # parse suffix from suffix=value
 IFS='=' read -ra suffix_flag <<< "$suffix_flag"
@@ -269,9 +289,36 @@ elif [[ "$domain" =~ amazonaws\.com$ ]]; then
   providerBranchRef="${providerBranchRef##*/}/--/"
 fi
 
+
+# make openurl
 openurl="$protocol://$domain/$urlpath"
 
-if (( is_commit )); then
+if (( is_cr_pr_mr_request )); then
+  # echo "providerBranchRef : '$providerBranchRef'"
+  if [[ "$providerBranchRef" = "/merge_requests" ]]; then
+    # new?merge_request[source_branch]=feature/single_client_ip_1&merge_request[target_branch]=develop
+    source_branch="$remote_ref"
+    target_branch="${pr_mr_target_branch}"
+
+    pr_mr_query="new?"
+    source_url="merge_request[source_branch]=${source_branch}"
+    target_url="&merge_request[target_branch]=${target_branch}"
+
+    pr_mr_query="${pr_mr_query}${source_url}"
+    if [ -n "$target_branch" ]; then
+      pr_mr_query="${pr_mr_query}${target_url}"
+    fi
+
+    openurl="${openurl}${providerBranchRef}/${pr_mr_query}"
+  elif [[ "$providerBranchRef" = "/pulls" ]]; then
+    # providerBranchRef="compare"
+    echo "current only support merge_requests."
+    exit 1
+  else
+    echo "current only support merge_requests."
+    exit 1
+  fi
+elif (( is_commit )); then
     sha=$(git rev-parse HEAD)
     openurl="$openurl/commit/$sha"
 elif [[ $remote_ref != "master" ]] || [[ $remote_ref != "main" ]]; then
@@ -282,6 +329,9 @@ fi
 if [ "$suffix" ]; then
     openurl="$openurl/$suffix"
 fi
+
+# echo "openurl : $openurl"
+
 
 # get current open browser command
 case $( uname -s ) in
