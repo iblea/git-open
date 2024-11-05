@@ -27,6 +27,7 @@ git open [remote] [branch]
 c,commit!     open current commit
 i,issue!      open issues page
 s,suffix=     append this suffix
+u,current!    open current path
 pr!           open pull/merge request page
 mr!           open pull/merge request page
 cpr!          create pull/merge request page
@@ -43,6 +44,7 @@ SUBDIRECTORY_OK='Yes' . "$(git --exec-path)/git-sh-setup"
 # Defaults
 is_commit=0
 is_issue=0
+is_current=0
 is_pr_mr_request=0
 is_cr_pr_mr_request=0
 pr_mr_target_branch=""
@@ -54,6 +56,7 @@ while test $# != 0; do
   case "$1" in
   --commit) is_commit=1;;
   --issue) is_issue=1;;
+  --current) is_current=1;;
   --pr) is_pr_mr_request=1;;
   --mr) is_pr_mr_request=1;;
   --cpr) is_cr_pr_mr_request=1;;
@@ -331,6 +334,15 @@ if [ "$suffix" ]; then
 fi
 
 # echo "openurl : $openurl"
+# echo "urlpath : $urlpath"
+# https://github.com/iblea/iblea_leetcode/tree/main /0074-search-a-2d-matrix
+
+if (( is_current )); then
+  current=$(git rev-parse --show-prefix)
+  if [ -n "$current" ] && [[ "$current" != "/" ]]; then
+    openurl="$openurl/$current"
+  fi
+fi
 
 
 # get current open browser command
